@@ -10,6 +10,22 @@ var _ = require('lodash');
 // The other side of the coin is the $digest function. It iterates over all the watchers that have been
 // attached on the scope, and runs their watch and listener functions accordingly.
 
-function Scope() {}
+function Scope() {
+	this.$$watchers = [];
+}
+
+Scope.prototype.$watch = function(watchFn, listenerFn) {
+	var watcher = {
+		watchFn: watchFn,
+		listenerFn: listenerFn
+	};
+	this.$$watchers.push(watcher);
+};
+
+Scope.prototype.$digest = function() {
+	_.forEach(this.$$watchers, function(watcher) {
+		watcher.listenerFn();	
+	});
+};
 
 module.exports = Scope;
