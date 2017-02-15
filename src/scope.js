@@ -23,9 +23,16 @@ Scope.prototype.$watch = function(watchFn, listenerFn) {
 };
 
 Scope.prototype.$digest = function() {
-	_.forEach(this.$$watchers, function(watcher) {
-		watcher.listenerFn();	
-	});
+	var self = this;
+	var newValue, oldValue;
+	this.$$watchers.forEach(function(watcher) {
+		newValue = watcher.watchFn(self);
+		oldValue = watcher.last;
+		if(newValue !== oldValue) {
+			watcher.last = newValue;
+			watcher.listenerFn(newValue, oldValue, self);
+		}	
+	}, this);
 };
 
 module.exports = Scope;
