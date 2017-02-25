@@ -128,7 +128,7 @@ describe('Scope', function() {
 
 		});
 
-		it('ends the digest when the last watch is clean.', function() {
+		it('ends the digest when the last dirty watch is clean.', function() {
 			scope.array = _.range(3);
 			var watchExecutions = 0;
 
@@ -146,6 +146,25 @@ describe('Scope', function() {
 			scope.$digest();
 
 			expect(watchExecutions).toBe(10);
+		});
+		it('does not end digest so that new watches are not run.', function() {
+			scope.aValue = 'abc';
+			scope.counter = 0;
+
+			scope.$watch(
+				function(scope) { return scope.aValue; },
+				function(newValue, oldValue, scope) {
+					scope.$watch(
+						function(scope) { return scope.aValue; },
+						function(newValue, oldValue, scope) {
+							scope.counter++;
+						}
+					);
+				}
+			);
+
+			scope.$digest();
+			expect(scope.counter).toBe(1);
 		});
 	});
 
