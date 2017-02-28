@@ -32,17 +32,21 @@ Scope.prototype.$$digestOnce = function() {
 	var self = this;
 	var newValue, oldValue, dirty;
 	_.forEach(this.$$watchers, function(watcher) {
-		newValue = watcher.watchFn(self);
-		oldValue = watcher.last;
-		// if !(false) ==> true, invoke listenerFn, etc.
-		if(!self.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-			self.$$lastDirtyWatch = watcher;
-			watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
-			watcher.listenerFn(newValue, (oldValue === initWatchVal ? newValue : oldValue), self);
-			dirty = true;
-		} else if (self.$$lastDirtyWatch === watcher) {
-			return false;
-		}	
+		try {
+			newValue = watcher.watchFn(self);
+			oldValue = watcher.last;
+			// if !(false) ==> true, invoke listenerFn, etc.
+			if(!self.$$areEqual(newValue, oldValue, watcher.valueEq)) {
+				self.$$lastDirtyWatch = watcher;
+				watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
+				watcher.listenerFn(newValue, (oldValue === initWatchVal ? newValue : oldValue), self);
+				dirty = true;
+			} else if (self.$$lastDirtyWatch === watcher) {
+				return false;
+			}				
+		} catch (e) {
+			console.error(e);
+		}
 	});
 	return dirty;
 };
@@ -53,6 +57,9 @@ Scope.prototype.$digest = function() {
 	this.$$lastDirtyWatch = null;
 	do {
 		dirty = this.$$digestOnce();
+		// could also do
+		// ttl--
+		// if(dirty && ttl <= 0)
 		if(dirty && !(ttl--)) {
 			throw '10 digest iterations reached.';
 		}
@@ -64,8 +71,7 @@ Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
 		return _.isEqual(newValue, oldValue);
 	} else {
 		return newValue === oldValue || 
-		(typeof newValue === 'number' && typeof oldValue === 'number' 
-			&& isNaN(newValue) && isNaN(oldValue));
+		(typeof newValue === 'number' && typeof oldValue === 'number' && isNaN(newValue) && isNaN(oldValue));
 	}
 };
 
