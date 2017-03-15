@@ -297,6 +297,32 @@ describe('Scope', function() {
 			scope.$digest();
 			expect(scope.counter).toBe(0);
 		});
+		// added in Chapter 2
+		it('has a $$phase field whose value is the current digest phase.', function() {
+			scope.aValue = [1,2,3];
+			scope.phaseInWatchFunction = undefined;
+			scope.phaseInListenerFunction = undefined;
+			scope.phaseInApplyFunction = undefined;
+
+			scope.$watch(
+				function(scope) {
+					scope.phaseInWatchFunction = scope.$$phase;
+					return scope.aValue;
+				},
+				function(newValue, oldValue, scope) {
+					scope.phaseInListenerFunction = scope.$$phase;
+				}
+			);
+
+			scope.$apply(function(scope) {
+				scope.phaseInApplyFunction = scope.$$phase;
+			});
+
+			expect(scope.phaseInWatchFunction).toBe('$digest');
+			expect(scope.phaseInListenerFunction).toBe('$digest');
+			expect(scope.phaseInApplyFunction).toBe('$apply');
+		});
+
 	});
 
 });
@@ -418,7 +444,7 @@ describe('$evalAsync', function() {
 		expect(scope.asyncEvaluatedTimes).toBe(2);
 	});
 
-	it('eventually halts $evalAsyncs added by watches (checking TTL).', function() {
+	it('eventually halts $evalAsyncs added by watches (checking TTL === 0 and async queue is still > 0).', function() {
 		scope.aValue = [1,2,3];
 
 		scope.$watch(function(scope) {
@@ -429,7 +455,29 @@ describe('$evalAsync', function() {
 		expect(function() { scope.$digest(); }).toThrow();
 
 	});
+
+	it('schedules a digest in $evalAsync.', function(done) {
+		scope.aValue = 'abc';
+		scope.counter = 0;
+
+		scope.$watch(
+			function(scope) { return scope.aValue; },
+			function(newValue, oldValue, scope) {
+				scope.counter++;
+			}
+		);
+
+		scope.$evalAsync(function(scope) {});
+
+		expect(scope.counter).toBe(0);
+
+		setTimeout(function() {
+			expect(scope.counter).toBe(1);
+			done();
+		}, 50);
+ 	});
 });
+
 
 
 
