@@ -14,6 +14,8 @@ function Scope() {
 	this.$$watchers = [];
 	this.$$lastDirtyWatch = null;
 	this.$$asyncQueue = [];
+	this.$$applyAsyncQueue = [];
+	this.$$applyAsyncId = null; // to keep track of whether setTimeout to drain queue has already been scheduled. 
 	this.$$phase = null;
 }
 
@@ -69,6 +71,12 @@ Scope.prototype.$digest = function() {
 	var dirty;
 	this.$$lastDirtyWatch = null;
 	this.$beginPhase('$digest');
+
+	if (this.$$applyAsyncId) {
+		clearTimeout(this.$$applyAsyncId);
+		this.$$flushApplyAsync();
+	}
+	
 	do {
 		while(this.$$asyncQueue.length) {
 			var asyncTask = this.$$asyncQueue.shift();
@@ -130,6 +138,32 @@ Scope.prototype.$clearPhase = function() {
 	this.$$phase = null;
 };
 
+Scope.prototype.$$flushApplyAsync = function() {
+	while(this.$$applyAsyncQueue.length) {
+		this.$$applyAsyncQueue.shift()();
+	}
+	this.$$applyAsyncId = null;
+};
+
+// does not evaluate the given function immediately 
+// nor does it launch a digest immediately. 
+// it schedules both of these things to happen after a short period of time. 
+Scope.prototype.$applyAsync = function(expr) {
+	var self = this;
+	self.$$applyAsyncQueue.push(function() {
+		self.$eval(expr);
+	});
+	// ensures setTimeout is not run in succession for each applyAsync invocation (therefore the digest is not run multiple times (for each asyncApply)).
+	// first applyAsync will equal null and go into setTimeout, next applyAsync will run, push item into queue and /
+	// will not run setTimeout. setTimeout for first applyAsync will resume once ready and will proceed into while loop.
+	// while loop will run based on queue length and the 1st item in the array is returned and the function is invoked (eval).
+	// after while loop is complete, set applyAsyncId to null.   
+	if(self.$$applyAsyncId === null) {
+		self.$$applyAsyncId = setTimeout(function() {
+			self.$apply(_.bind(self.$$flushApplyAsync, self));
+		}, 0);
+	}
+};
 
 
 
