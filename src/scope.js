@@ -166,6 +166,7 @@ Scope.prototype.$$flushApplyAsync = function() {
 // nor does it launch a digest immediately. 
 // it schedules both of these things to happen after a short period of time. 
 Scope.prototype.$applyAsync = function(expr) {
+	// NOTE: try and refactor like gordon did
 	var self = this;
 	self.$$applyAsyncQueue.push(function() {
 		self.$eval(expr);
@@ -184,6 +185,58 @@ Scope.prototype.$applyAsync = function(expr) {
 
 Scope.prototype.$$postDigest = function(fn) {
 	this.$$postDigestQueue.push(fn);
+};
+
+// The $watchGroup function takes several watch functions wrapped in an array, and a single listener
+// function. The idea is that when any of the watch functions given in the array detects a change,
+// the listener function is invoked. The listener function is given the new and old values of the watches
+// wrapped in arrays, in the order of the original watch functions.
+Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
+	var self = this;
+	var newValues = new Array(watchFns.length);
+	var oldValues = new Array(watchFns.length);
+	var changeReactionScheduled = false;
+	var firstRun = true;
+
+	if (watchFns.length === 0) {
+		var shouldCall = true;
+		self.$evalAsync(function() {
+			if (shouldCall) {
+				listenerFn(newValues, newValues, self);
+			}
+		});
+		return function() {
+			shouldCall = false;
+		};
+	}
+
+	function watchGroupListener() {
+		if (firstRun) {
+			firstRun = false;
+			listenerFn(newValues, newValues, self);
+		} else {
+			listenerFn(newValues, oldValues, self);
+		}
+		changeReactionScheduled = false;
+	}
+
+// TODO: NOTES
+	var destroyFunctions = _.map(watchFns, function(watchFn, i) {
+		return self.$watch(watchFn, function(newValue, oldValue) {
+			newValues[i] = newValue;
+			oldValues[i] = oldValue;
+			if (!changeReactionScheduled) {
+				changeReactionScheduled = true;
+				self.$evalAsync(watchGroupListener);
+			}
+		});
+	});
+
+	return function() {
+		_.forEach(destroyFunctions, function(destroyFunction) {
+			destroyFunction();
+		});
+	};
 };
 
 
