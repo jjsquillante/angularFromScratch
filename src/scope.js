@@ -114,10 +114,20 @@ Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
 	}
 };
 
+// $eval
+// takes a function as an argument and immediately executes that
+// function giving it the scope itself as an argument. 
+// It then returns whatever the function returned. 
 Scope.prototype.$eval = function(expr, locals) {
 	return expr(this, locals);
 };
 
+// $apply 
+// takes a function as an argument.
+// It executes that function using $eval, and then kickstarts
+// the digest cycle by invoking $digest.
+// The $digest call is done in a finally block to make sure 
+// the digest will happen even if the supplied function throws an exception. 
 Scope.prototype.$apply = function(expr) {
 	try {
 		this.$beginPhase('$apply');
@@ -128,6 +138,9 @@ Scope.prototype.$apply = function(expr) {
 	}
 };
 
+// $evalAsync
+// $evalAsync takes a function and schedules it to run 
+// later but still during the ongoing digest.
 Scope.prototype.$evalAsync = function(expr) {
 	var self = this;
 	if(!self.$$phase && !self.$$asyncQueue.length) {
@@ -237,6 +250,22 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 			destroyFunction();
 		});
 	};
+};
+
+
+Scope.prototype.$new = function() {
+	// as a constructor function
+	var ChildScope = function() { };
+	// only constructor functions have .prototype
+	ChildScope.prototype = this;
+
+	var child = new ChildScope();	
+	return child;
+
+	// with Object.create:
+	// var ChildScope = Object.create(this);
+	// var child = Object.create(ChildScope);
+	// return child;
 };
 
 
