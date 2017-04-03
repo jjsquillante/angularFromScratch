@@ -258,14 +258,12 @@ Scope.prototype.$new = function() {
 	var ChildScope = function() { };
 	// only constructor functions have .prototype
 	ChildScope.prototype = this;
-
 	var child = new ChildScope();	
 	return child;
 
-	// with Object.create:
-	// var ChildScope = Object.create(this);
-	// var child = Object.create(ChildScope);
-	// return child;
+	// simplified with Object.create:
+	//var child = Object.create(this);
+	//return child;
 };
 
 

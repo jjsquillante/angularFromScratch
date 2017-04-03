@@ -930,6 +930,34 @@ describe('Scope', function() {
 			expect(aaa.anotherValue).toBeUndefined();
 
 		});
+
+		it('shadows a parents property with the same name.', function() {
+			
+			var parent = new Scope();
+			// create child scope of parent 
+			var child = parent.$new();
+
+			parent.name = 'Joe';
+			child.name = 'Jill';
+
+			expect(parent.name).toBe('Joe');
+			expect(child.name).toBe('Jill');
+
+		});
+
+		it('does not shadow members of parent scope attributes.', function() {
+			// NOTE: The reason this works is that we don’t assign anything on the child scope. We merely *read* the user
+			// attribute from the scope and assign something within that object. 
+			var parent = new Scope();
+			var child = parent.$new();
+
+			parent.user = {name: 'Joe'};
+			child.user.name = 'Jill';
+
+			expect(child.user.name).toBe('Jill');
+			expect(parent.user.name).toBe('Jill');
+
+		});
 	});
 });
 
