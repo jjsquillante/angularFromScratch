@@ -958,6 +958,23 @@ describe('Scope', function() {
 			expect(parent.user.name).toBe('Jill');
 
 		});
+
+		it('does not digest its parent(s)', function() {
+			// NOTE: The $$watchers array of each scope shadows the one in its parent. 
+			// Every scope in the hierarchy has its own watchers (added array in Scope.prototype.$new). 
+			// When we call $digest on a scope, it is the watchers from that exact scope that get executed.
+			var parent = new Scope();
+			var child = parent.$new();
+
+			parent.aValue = 'abc';
+			parent.$watch(
+				function(scope) { return scope.aValue; },
+				function(newValue, oldValue, scope) { scope.aValueWas = newValue; }
+			);
+
+			child.$digest();
+			expect(child.aValueWas).toBeUndefined();
+		});
 	});
 });
 

@@ -258,7 +258,8 @@ Scope.prototype.$new = function() {
 	var ChildScope = function() { };
 	// only constructor functions have .prototype
 	ChildScope.prototype = this;
-	var child = new ChildScope();	
+	var child = new ChildScope();
+	child.$$watchers = [];	
 	return child;
 
 	// simplified with Object.create:
