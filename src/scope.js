@@ -276,10 +276,14 @@ Scope.prototype.$new = function() {
 	//return child;
 };
 
+// everyScope accepts a fn as a parameter.
+// passes/calls the function w/in the if statement (returns true or false based on if scope is dirty or clean).
+// 
 Scope.prototype.$$everyScope = function(fn) {
 	if(fn(this)) {
+		// returns true or false based on the recursive call below.
 		return this.$$children.every(function(child) {
-			return child.$$everyScope(fn);
+			return child.$$everyScope(fn); // returns true or false
 		});
 	} else {
 		return false;
