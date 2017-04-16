@@ -611,6 +611,9 @@ describe('Scope', function() {
 		});
 
 		it('catches exceptions in $applyAsync.', function(done) {
+			// reference page 82. 
+			// need to throw two errors, otherwise scope.applied will = true
+			// bc the finally block causes the next applyAsync to flush in the digest. 
 			scope.$applyAsync(function(scope) {
 				throw 'Error';
 			});
@@ -974,6 +977,42 @@ describe('Scope', function() {
 
 			child.$digest();
 			expect(child.aValueWas).toBeUndefined();
+		});
+
+		it('keeps a record of its children.', function() {
+			var parent = new Scope();
+			var child1 = parent.$new();
+			var child2 = parent.$new();
+			var child2_1 = child2.$new();
+
+			expect(parent.$$children.length).toBe(2);
+			expect(parent.$$children[0]).toBe(child1);
+			expect(parent.$$children[1]).toBe(child2);
+
+			expect(child1.$$children.length).toBe(0);
+
+			expect(child2.$$children.length).toBe(1);
+			expect(child2.$$children[0]).toBe(child2_1);
+		});
+
+		fit('digests its children', function() {
+			var parent = new Scope();
+			// inherit scope as prototype from parent.
+			var child = parent.$new();
+
+			parent.aValue = 'abc';
+			child.$watch(
+				function(scope) { return scope.aValue; },
+				function(newValue, oldValue, scope) {
+					scope.aValueWas = newValue;
+				}
+			);
+
+			parent.$digest();
+			// no watch set on parent, but child is down the prototype chain from parent
+			// digest everything under parent to ensure that a value set at the parent level can be checked
+			// recognized as dirty if the child calls the property from prototype.
+			expect(child.aValueWas).toBe('abc');
 		});
 	});
 });
