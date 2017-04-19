@@ -17,6 +17,7 @@ function Scope() {
 	this.$$applyAsyncQueue = [];
 	this.$$applyAsyncId = null; // to keep track of whether setTimeout to drain queue has already been scheduled. 
 	this.$$postDigestQueue = [];
+	this.$root = this; // makes $root available to every scope in the hierarchy (prototypal inheritance chain)
 	this.$$children = [];
 	this.$$phase = null;
 }
@@ -32,21 +33,21 @@ Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
 		last: initWatchVal
 	};
 	this.$$watchers.unshift(watcher);
-	this.$$lastDirtyWatch = null;
+	this.$root.$$lastDirtyWatch = null;
 
 	return function() {
 		var index = self.$$watchers.indexOf(watcher);
 		if (index >= 0) {
 			self.$$watchers.splice(index, 1);
-			self.$$lastDirtyWatch = null; // set to null on removal so lastDirtyWatch does not cause shortCircuit
+			self.$root.$$lastDirtyWatch = null; // set to null on removal so lastDirtyWatch does not cause shortCircuit
+			// set root of lastDirtyWatch no matter where scope is digested.
 		}
 	};
 };
 
 Scope.prototype.$$digestOnce = function() {
 	var dirty;
-	var continueLoop = true;
-	var self = this;
+	var continueLoop = true; // leaving continue loop since it's easier to read
 	this.$$everyScope(function(scope) {
 		var newValue, oldValue;
 		_.forEachRight(scope.$$watchers, function(watcher) {
@@ -56,11 +57,11 @@ Scope.prototype.$$digestOnce = function() {
 					oldValue = watcher.last;
 					// if !(false) ==> true, invoke listenerFn, etc.
 					if(!scope.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-						self.$$lastDirtyWatch = watcher;
+						scope.$root.$$lastDirtyWatch = watcher;
 						watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
 						watcher.listenerFn(newValue, (oldValue === initWatchVal ? newValue : oldValue), scope);
 						dirty = true;
-					} else if (self.$$lastDirtyWatch === watcher) {
+					} else if (scope.$root.$$lastDirtyWatch === watcher) {
 						continueLoop = false;
 						return false;
 					}
@@ -70,6 +71,7 @@ Scope.prototype.$$digestOnce = function() {
 			}
 		});
 		return continueLoop;
+		// return dirty !== false;
 	});
 	return dirty;
 };
@@ -77,7 +79,7 @@ Scope.prototype.$$digestOnce = function() {
 Scope.prototype.$digest = function() {
 	var ttl = 10;
 	var dirty;
-	this.$$lastDirtyWatch = null;
+	this.$root.$$lastDirtyWatch = null; // We should always refer to the $$lastDirtyWatch of root, no matter which scope $digest was called on.
 	this.$beginPhase('$digest');
 
 	if (this.$$applyAsyncId) {
@@ -141,7 +143,7 @@ Scope.prototype.$apply = function(expr) {
 		return this.$eval(expr);
 	} finally {
 		this.$clearPhase();
-		this.$digest();
+		this.$root.$digest();
 	}
 };
 
@@ -153,7 +155,7 @@ Scope.prototype.$evalAsync = function(expr) {
 	if(!self.$$phase && !self.$$asyncQueue.length) {
 		setTimeout(function() {
 			if(self.$$asyncQueue.length) {
-				self.$digest();
+				self.$root.$digest(); // digest at root scope  
 			}
 		}, 0);
 	}
@@ -283,6 +285,7 @@ Scope.prototype.$$everyScope = function(fn) {
 	if(fn(this)) {
 		// returns true or false based on the recursive call below.
 		return this.$$children.every(function(child) {
+			//console.log(child);
 			return child.$$everyScope(fn); // returns true or false
 		});
 	} else {
