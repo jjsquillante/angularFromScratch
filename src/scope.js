@@ -262,20 +262,22 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 };
 
 
-Scope.prototype.$new = function() {
-	// as a constructor function
-	var ChildScope = function() { };
-	// only constructor functions have .prototype
-	ChildScope.prototype = this;
-	var child = new ChildScope();
+Scope.prototype.$new = function(isolated) {
+	var child;
+	if(isolated) {
+		child = new Scope();
+		child.$root = this.$root;
+		child.$$asyncQueue = this.$$asyncQueue;
+		child.$$postDigestQueue = this.$$postDigestQueue;
+	} else {
+		var ChildScope = function() {};
+		ChildScope.prototype = this;
+		child = new ChildScope();
+	}
 	this.$$children.push(child);
 	child.$$watchers = [];
 	child.$$children = [];	
 	return child;
-
-	// simplified with Object.create:
-	//var child = Object.create(this);
-	//return child;
 };
 
 // everyScope accepts a fn as a parameter.
