@@ -82,8 +82,8 @@ Scope.prototype.$digest = function() {
 	this.$root.$$lastDirtyWatch = null; // We should always refer to the $$lastDirtyWatch of root, no matter which scope $digest was called on.
 	this.$beginPhase('$digest');
 
-	if (this.$$applyAsyncId) {
-		clearTimeout(this.$$applyAsyncId);
+	if (this.$root.$$applyAsyncId) {
+		clearTimeout(this.$root.$$applyAsyncId);
 		this.$$flushApplyAsync();
 	}
 	
@@ -181,7 +181,7 @@ Scope.prototype.$$flushApplyAsync = function() {
 			console.log(e);
 		}
 	}
-	this.$$applyAsyncId = null;
+	this.$root.$$applyAsyncId = null;
 };
 
 // does not evaluate the given function immediately 
@@ -198,8 +198,8 @@ Scope.prototype.$applyAsync = function(expr) {
 	// will not run setTimeout. setTimeout for first applyAsync will resume once ready and will proceed into while loop.
 	// while loop will run based on queue length and the 1st item in the array is returned and the function is invoked (eval).
 	// after while loop is complete, set applyAsyncId to null.   
-	if(self.$$applyAsyncId === null) {
-		self.$$applyAsyncId = setTimeout(function() {
+	if(self.$root.$$applyAsyncId === null) {
+		self.$root.$$applyAsyncId = setTimeout(function() {
 			self.$apply(_.bind(self.$$flushApplyAsync, self));
 		}, 0);
 	}
@@ -269,6 +269,7 @@ Scope.prototype.$new = function(isolated) {
 		child.$root = this.$root;
 		child.$$asyncQueue = this.$$asyncQueue;
 		child.$$postDigestQueue = this.$$postDigestQueue;
+		child.$$applyAsyncQueue = this.$$applyAsyncQueue;
 	} else {
 		var ChildScope = function() {};
 		ChildScope.prototype = this;
