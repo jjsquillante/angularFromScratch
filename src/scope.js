@@ -262,20 +262,21 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 };
 
 
-Scope.prototype.$new = function(isolated) {
+Scope.prototype.$new = function(isolated, parent) {
 	var child;
+	parent = parent || this; // defaults to this unless specific parent is passed in arg.
 	if(isolated) {
 		child = new Scope();
-		child.$root = this.$root;
-		child.$$asyncQueue = this.$$asyncQueue;
-		child.$$postDigestQueue = this.$$postDigestQueue;
-		child.$$applyAsyncQueue = this.$$applyAsyncQueue;
+		child.$root = parent.$root;
+		child.$$asyncQueue = parent.$$asyncQueue;
+		child.$$postDigestQueue = parent.$$postDigestQueue;
+		child.$$applyAsyncQueue = parent.$$applyAsyncQueue;
 	} else {
 		var ChildScope = function() {};
 		ChildScope.prototype = this;
 		child = new ChildScope();
 	}
-	this.$$children.push(child);
+	parent.$$children.push(child);
 	child.$$watchers = [];
 	child.$$children = [];	
 	return child;
@@ -295,7 +296,6 @@ Scope.prototype.$$everyScope = function(fn) {
 		return false;
 	}
 };
-
 
 
 
