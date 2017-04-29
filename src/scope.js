@@ -278,7 +278,8 @@ Scope.prototype.$new = function(isolated, parent) {
 	}
 	parent.$$children.push(child);
 	child.$$watchers = [];
-	child.$$children = [];	
+	child.$$children = [];
+	child.$parent = parent;	
 	return child;
 };
 
@@ -287,14 +288,29 @@ Scope.prototype.$new = function(isolated, parent) {
 // 
 Scope.prototype.$$everyScope = function(fn) {
 	if(fn(this)) {
-		// returns true or false based on the recursive call below.
+		// .every returns true or false based on the callback evaluation.
 		return this.$$children.every(function(child) {
-			//console.log(child);
+			// returns false on second r
 			return child.$$everyScope(fn); // returns true or false
 		});
 	} else {
 		return false;
 	}
+};
+
+// checks if scope has a parent to determine it's not the root scope.
+// then finds the current scope from its parent's $$children array and gets the position of the scope
+// checks if return value from indexOf is >= 0 to determine if we need to splice the array. (indexOf returns -1 )
+// set current scope's watchers to null 
+Scope.prototype.$destroy = function () {
+	if (this.$parent) {
+		var siblings = this.$parent.$$children;
+		var indexOfThis = siblings.indexOf(this);
+		if (indexOfThis >= 0) {
+			siblings.splice(indexOfThis, 1);
+		}
+	}
+	this.$$watchers = null;
 };
 
 
