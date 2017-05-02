@@ -325,8 +325,6 @@ describe('Scope', function() {
 
 	});
 
-
-
 	// Chapter 2.
 	describe('$eval', function() {
 		
@@ -848,7 +846,7 @@ describe('Scope', function() {
 		});
 	});
 
-	// Chapter 3
+	// Chapter 3.
 	describe('inheritance', function() {
 		it('inherits a parents scope properties.', function() {
 			var parent = new Scope();
@@ -1210,6 +1208,58 @@ describe('Scope', function() {
 			child.aValue.push(5);
 			parent.$digest();
 			expect(child.counter).toBe(2);
+		});
+	});
+	
+	// Chapter 4.
+	describe('$watchCollection', function () {
+		var scope;
+		beforeEach(function () {
+			scope = new Scope();
+		});
+
+		it('works like a normal watch for non-collections.', function () {
+			var valueProvided;
+
+			scope.aValue = 42;
+			scope.counter = 0;
+
+			scope.$watchCollection(
+				function (scope) { return scope.aValue; },
+				function (newValue, oldValue, scope) { 
+					valueProvided = newValue;
+					scope.counter++;
+				}
+			);
+			scope.$digest();
+			expect(scope.counter).toBe(1);
+
+			expect(valueProvided).toBe(scope.aValue);
+
+			scope.aValue = 43;
+			scope.$digest();
+			expect(scope.counter).toBe(2);
+
+			scope.$digest();
+			expect(scope.counter).toBe(2);
+		});
+
+		it('works like a normal watch for NaNs.', function () {
+			scope.aValue = 0/0;
+			scope.counter = 0;
+
+			scope.$watchCollection(
+				function (scope) { return scope.aValue; }, 
+				function (newValue, oldValue, scope) {
+					scope.counter++;
+				}
+			);
+
+			scope.$digest();
+			expect(scope.counter).toBe(1);
+
+			scope.$digest();
+			expect(scope.counter).toBe(1);
 		});
 	});
 });
