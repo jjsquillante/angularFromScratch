@@ -290,7 +290,7 @@ Scope.prototype.$$everyScope = function(fn) {
 	if(fn(this)) {
 		// .every returns true or false based on the callback evaluation.
 		return this.$$children.every(function(child) {
-			// returns false on second r
+			// will return false if scope is clean
 			return child.$$everyScope(fn); // returns true or false
 		});
 	} else {
@@ -321,17 +321,25 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 
 	var internalWatchFn = function (scope) { 
 		newValue = watchFn(scope);
+		if (_.isObject(newValue)) {
+			if(_.isArray(newValue)) {
+				if(!_.isArray(oldValue)) {
+					changeCount++;
+					oldValue = [];
+				}
+			} else {
 
-		// check for changes
-		// use .$$areEqual to prevent NaN's from throwing 'TTL' error in digest.
-		if (!self.$$areEqual(newValue, oldValue, false)) {
-			changeCount++;
+			}
+		} else {
+			// use .$$areEqual to prevent NaN's from throwing 'TTL' error in digest.
+			if (!self.$$areEqual(newValue, oldValue, false)) {
+				changeCount++;
+			}
+			oldValue = newValue;
 		}
-
-		oldValue = newValue;
-
 		return changeCount;
 	};
+
 	var internalListenerFn = function () {
 		listenerFn(newValue, oldValue, self);
 	};
