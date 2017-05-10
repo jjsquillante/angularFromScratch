@@ -2,6 +2,16 @@
 
 var _ = require('lodash');
 
+function initWatchVal () {}
+
+function isArrayLike(obj) {
+	if (_.isNull(obj) || _.isUndefined(obj)) {
+		return false;
+	}
+	var length = obj.length;
+	return _.isNumber(length);
+}
+
 // A watcher is something that is notified when a change occurs on the scope. 
 // You can create a watcher by calling $watch with two arguments, both of which should be functions:
 // • A watch function, which specifies the piece of data you’re interested in.
@@ -21,8 +31,6 @@ function Scope() {
 	this.$$children = [];
 	this.$$phase = null;
 }
-
-function initWatchVal() {}
 
 Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
 	var self = this;
@@ -322,7 +330,7 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	var internalWatchFn = function (scope) { 
 		newValue = watchFn(scope);
 		if (_.isObject(newValue)) {
-			if (_.isArray(newValue)) {
+			if (isArrayLike(newValue)) {
 				if (!_.isArray(oldValue)) {
 					changeCount++;
 					oldValue = [];
@@ -357,8 +365,6 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 
 	return this.$watch(internalWatchFn, internalListenerFn);
 };
-
-
 
 
 
