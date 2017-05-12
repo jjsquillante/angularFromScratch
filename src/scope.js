@@ -329,7 +329,9 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 
 	var internalWatchFn = function (scope) { 
 		newValue = watchFn(scope);
+		// check if newValue is an object (array falls within object)
 		if (_.isObject(newValue)) {
+			// check if array or arrayLike
 			if (isArrayLike(newValue)) {
 				if (!_.isArray(oldValue)) {
 					changeCount++;
@@ -347,10 +349,16 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 					}
 				});
 			} else {
-
+				// check if object or if an array-like object slips into else statement - must also exclude arrayLike objs.
+				// if old value is not currently an object. - (!false) - true.
+				if (!_.isObject(oldValue)  || isArrayLike(oldValue)) {
+					changeCount++;
+					oldValue = {};
+				}
 			}
 		} else {
-			// use .$$areEqual to prevent NaN's from throwing 'TTL' error in digest.
+			// use .$$areEqual to prevent NaN's (never equal) from throwing 'TTL' error in digest.
+			// take opposite of whatever is returned from .$$areEqual
 			if (!self.$$areEqual(newValue, oldValue, false)) {
 				changeCount++;
 			}
