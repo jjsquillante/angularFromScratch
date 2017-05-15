@@ -355,6 +355,14 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 					changeCount++;
 					oldValue = {};
 				}
+
+				_.forOwn(newValue, function (newVal, key) {
+					var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
+					if (!bothNaN && oldValue[key] !== newVal) {
+						changeCount++;
+						oldValue[key] = newVal;
+					}
+				});
 			}
 		} else {
 			// use .$$areEqual to prevent NaN's (never equal) from throwing 'TTL' error in digest.
