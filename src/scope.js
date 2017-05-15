@@ -356,11 +356,23 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 					oldValue = {};
 				}
 
+				// loop over the attributes of the new object and check whether they have the same values as the old object attributes.
+				// also, check to ensure the new/old object does not have NaN as an attribute. 
+				// (since NaN !== NaN, it causes an infinite digest).
 				_.forOwn(newValue, function (newVal, key) {
 					var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
 					if (!bothNaN && oldValue[key] !== newVal) {
 						changeCount++;
 						oldValue[key] = newVal;
+					}
+				});
+
+				// loop over the attributes of the old object and see if they're still present in the new object.
+				// if they're not, they no longer exist and we remove them.
+				_.forOwn(oldValue, function (oldVal, key) {
+					if(!newValue.hasOwnProperty(key)) {
+						changeCount++;
+						delete oldValue[key];
 					}
 				});
 			}
