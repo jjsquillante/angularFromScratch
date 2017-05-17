@@ -325,9 +325,11 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	var self = this;
 	var newValue;
 	var oldValue;
+	var oldLength;
 	var changeCount = 0;
 
-	var internalWatchFn = function (scope) { 
+	var internalWatchFn = function (scope) {
+		var newLength; 
 		newValue = watchFn(scope);
 		// check if newValue is an object (array falls within object)
 		if (_.isObject(newValue)) {
@@ -354,27 +356,40 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 				if (!_.isObject(oldValue)  || isArrayLike(oldValue)) {
 					changeCount++;
 					oldValue = {};
+					// initiate old length once we've assigned oldValue as an object.
+					oldLength = 0;
 				}
-
+				// set newLength
+				newLength = 0;
 				// loop over the attributes of the new object and check whether they have the same values as the old object attributes.
 				// also, check to ensure the new/old object does not have NaN as an attribute. 
 				// (since NaN !== NaN, it causes an infinite digest).
 				_.forOwn(newValue, function (newVal, key) {
-					var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
-					if (!bothNaN && oldValue[key] !== newVal) {
+					newLength++;
+					if (oldValue.hasOwnProperty(key)) {
+						var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
+						if (!bothNaN && oldValue[key] !== newVal) {
+							changeCount++;
+							oldValue[key] = newVal;
+						}
+					} else {
 						changeCount++;
+						oldLength++;
 						oldValue[key] = newVal;
-					}
+					}	
 				});
 
 				// loop over the attributes of the old object and see if they're still present in the new object.
 				// if they're not, they no longer exist and we remove them.
-				_.forOwn(oldValue, function (oldVal, key) {
-					if(!newValue.hasOwnProperty(key)) {
-						changeCount++;
-						delete oldValue[key];
-					}
-				});
+				if (oldLength > newLength) {
+					changeCount++;
+					_.forOwn(oldValue, function (oldVal, key) {
+						if (!newValue.hasOwnProperty(key)) {
+							oldLength--;
+							delete oldValue[key];
+						}
+					});
+				}
 			}
 		} else {
 			// use .$$areEqual to prevent NaN's (never equal) from throwing 'TTL' error in digest.
