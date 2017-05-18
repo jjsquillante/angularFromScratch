@@ -9,7 +9,11 @@ function isArrayLike(obj) {
 		return false;
 	}
 	var length = obj.length;
-	return _.isNumber(length);
+	// checks to ensure argument is an array or array like with length property, not an 
+	// property named 'length' in an object. determines if is an array or array like
+	// by checking if the (length value - 1) key also exists in the array property.
+	// will also return true for array lengths that === 0. 
+	return length === 0 || (_.isNumber(length) && length > 0 && (length - 1) in obj);
 }
 
 // A watcher is something that is notified when a change occurs on the scope. 
@@ -87,6 +91,7 @@ Scope.prototype.$$digestOnce = function() {
 Scope.prototype.$digest = function() {
 	var ttl = 10;
 	var dirty;
+	// any time $digest is called, reset last dirtyWatch. Prevents unecessary shortCircuit when digest is called within a watch. edge case.  
 	this.$root.$$lastDirtyWatch = null; // We should always refer to the $$lastDirtyWatch of root, no matter which scope $digest was called on.
 	this.$beginPhase('$digest');
 
@@ -135,6 +140,19 @@ Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
 // takes a function as an argument and immediately executes that
 // function giving it the scope itself as an argument. 
 // It then returns whatever the function returned. 
+
+/**
+ * Evaluates an expression in the context of a scope.
+ * $eval takes a function as an argument and immediately executes the function, passing the scope as an argument.
+ * 
+ * scope.aValue = 42;
+ * var expr = function (scope, locals) { return scope.aValue + locals; };
+ * scope.$eval(expr, 2) === 44;
+ *
+ * @param {function} expr Function that will be called with scope as first argument.
+ * @param [locals] Optional arguments that are passed as-is into expr as second argument..
+ * @returns {*} Result of evaluating expr.
+*/
 Scope.prototype.$eval = function(expr, locals) {
 	return expr(this, locals);
 };
@@ -408,7 +426,5 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 
 	return this.$watch(internalWatchFn, internalListenerFn);
 };
-
-
 
 module.exports = Scope;
