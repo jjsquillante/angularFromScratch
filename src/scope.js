@@ -9,10 +9,10 @@ function isArrayLike(obj) {
 		return false;
 	}
 	var length = obj.length;
-	// checks to ensure argument is an array or array like with length property, not an 
+	// checks to ensure argument is an array or array-like obj with length property, not a
 	// property named 'length' in an object. determines if is an array or array like
-	// by checking if the (length value - 1) key also exists in the array property.
-	// will also return true for array lengths that === 0. 
+	// by checking if the (length value - 1) key/position also exists in the array.
+	// will return true for array lengths that === 0. (object length will be undefined)
 	return length === 0 || (_.isNumber(length) && length > 0 && (length - 1) in obj);
 }
 
@@ -344,7 +344,10 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	var newValue;
 	var oldValue;
 	var oldLength;
+	var veryOldValue;
+	var trackVeryOldValue = (listenerFn.length > 1);
 	var changeCount = 0;
+	var firstRun = true;
 
 	var internalWatchFn = function (scope) {
 		var newLength; 
@@ -421,7 +424,16 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	};
 
 	var internalListenerFn = function () {
-		listenerFn(newValue, oldValue, self);
+		if (firstRun) {
+			listenerFn(newValue, newValue, self);
+			firstRun = false;
+		} else {
+			listenerFn(newValue, veryOldValue, self);
+		}
+
+		if (trackVeryOldValue) {
+			veryOldValue = _.clone(newValue);
+		}
 	};
 
 	return this.$watch(internalWatchFn, internalListenerFn);
