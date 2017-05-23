@@ -4,6 +4,14 @@ var _ = require('lodash');
 
 function initWatchVal () {}
 
+/**
+ * @function isArrayLike
+ *
+ * TODO
+ *
+ *
+*/
+
 function isArrayLike(obj) {
 	if (_.isNull(obj) || _.isUndefined(obj)) {
 		return false;
@@ -16,13 +24,18 @@ function isArrayLike(obj) {
 	return length === 0 || (_.isNumber(length) && length > 0 && (length - 1) in obj);
 }
 
-// A watcher is something that is notified when a change occurs on the scope. 
-// You can create a watcher by calling $watch with two arguments, both of which should be functions:
-// • A watch function, which specifies the piece of data you’re interested in.
-// • A listener function which will be called whenever that data changes.
-
-// The other side of the coin is the $digest function. It iterates over all the watchers that have been
-// attached on the scope, and runs their watch and listener functions accordingly.
+/**
+ * Scope
+ *
+ * Represents a JavaScript object that, among other things, stores each watcher object in an array. 
+ *
+ * @example 
+ * function Scope () { this.$$watchers = []; }
+ * var scope = new Scope();
+ * 
+ * @constructor
+ * @returns {Object} a reference to the Object constructor
+*/
 
 function Scope() {
 	this.$$watchers = [];
@@ -35,6 +48,22 @@ function Scope() {
 	this.$$children = [];
 	this.$$phase = null;
 }
+
+/**
+ * @function $watch
+ *
+ * A watcher is something that is notified when a change occurs on the scope.
+ * You can create a watcher by calling $watch with two arguments, both of which should be functions:
+ * • A watch function, which specifies the piece of data you’re interested in.
+ * • A listener function which will be called whenever that data changes.
+ *
+ * @param {function} watcherFn Function will be called as the first argument.
+ * @param {function} listenerFn Function will be called as the second argument.
+ * @param {Boolean} valueEq is a Boolean flag to determine whether to deep clone and apply 'value based dirty checking' /
+ *  • (if object or array, iterate through values contained and check if there's a difference).
+ * 
+ * @return {Function} to call on later if we would like to delete the watcher.
+*/ 
 
 Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
 	var self = this;
@@ -56,6 +85,21 @@ Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
 		}
 	};
 };
+
+/**
+ * @function $$digestOnce
+ * 
+ * $$digestOnce will iterate over all registered watchers and call their listener function. 
+ * $$digestOnce implements `dirty checking` where, only if the values specified by the watch function have changed, 
+ * we call the listener function
+ * Doing multiple passes is the only way to notice changes applied for watchers that rely on other watchers.
+ * If on the first change the flag is marked true, all watchers will run for a second time - this goes on until each watch is stable. 
+ * 
+ * @return {Boolean} flag returned based on the watcher.
+ * if newValue and oldValue do not match, boolean flag will be set as true and we'll 
+ * return true to continue do/while loop within $digest.
+ * 
+*/
 
 Scope.prototype.$$digestOnce = function() {
 	var dirty;
@@ -88,11 +132,24 @@ Scope.prototype.$$digestOnce = function() {
 	return dirty;
 };
 
+/**
+ * @function $digest
+ *
+ * digest is the outerloop for $$digestOnce, calling $$digestOnce (returns boolean) /
+ * as long as changes keep occurring.
+ * 
+ * 
+*/
 Scope.prototype.$digest = function() {
 	var ttl = 10;
 	var dirty;
-	// any time $digest is called, reset last dirtyWatch. Prevents unecessary shortCircuit when digest is called within a watch. edge case.  
-	this.$root.$$lastDirtyWatch = null; // We should always refer to the $$lastDirtyWatch of root, no matter which scope $digest was called on.
+	/**
+	 * When $digest is called, reset $lastDirtyWatch.
+	 * Prevents unecessary shortCircuit when called within a watch Function.
+	 * Refers to the $$lastDirtyWatch of root, no matter which scope $digest is called on.
+	*/ 
+	this.$root.$$lastDirtyWatch = null;
+
 	this.$beginPhase('$digest');
 
 	if (this.$root.$$applyAsyncId) {
@@ -127,6 +184,15 @@ Scope.prototype.$digest = function() {
 	}
 };
 
+/**
+ * @function $$areEqual
+ * 
+ * TODO
+ *
+ *
+ *
+*/
+
 Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
 	if(valueEq) {
 		return _.isEqual(newValue, oldValue);
@@ -136,23 +202,22 @@ Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
 	}
 };
 
-// $eval
-// takes a function as an argument and immediately executes that
-// function giving it the scope itself as an argument. 
-// It then returns whatever the function returned. 
-
 /**
+ * $eval
+ *
  * Evaluates an expression in the context of a scope.
  * $eval takes a function as an argument and immediately executes the function, passing the scope as an argument.
  * 
+ * @example
  * scope.aValue = 42;
  * var expr = function (scope, locals) { return scope.aValue + locals; };
  * scope.$eval(expr, 2) === 44;
  *
  * @param {function} expr Function that will be called with scope as first argument.
- * @param [locals] Optional arguments that are passed as-is into expr as second argument..
+ * @param [locals] Optional arguments that are passed as-is into expr as second argument.
  * @returns {*} Result of evaluating expr.
 */
+
 Scope.prototype.$eval = function(expr, locals) {
 	return expr(this, locals);
 };
@@ -163,6 +228,15 @@ Scope.prototype.$eval = function(expr, locals) {
 // the digest cycle by invoking $digest.
 // The $digest call is done in a finally block to make sure 
 // the digest will happen even if the supplied function throws an exception. 
+
+/**
+ * @function $apply
+ *
+ * TODO
+ *
+ * @return
+ *
+*/
 Scope.prototype.$apply = function(expr) {
 	try {
 		this.$beginPhase('$apply');
@@ -176,6 +250,15 @@ Scope.prototype.$apply = function(expr) {
 // $evalAsync
 // $evalAsync takes a function and schedules it to run 
 // later but still during the ongoing digest.
+
+/**
+ * @function $evalAsync
+ *
+ * TODO
+ *
+ *
+ *
+*/
 Scope.prototype.$evalAsync = function(expr) {
 	var self = this;
 	if(!self.$$phase && !self.$$asyncQueue.length) {
@@ -188,6 +271,16 @@ Scope.prototype.$evalAsync = function(expr) {
 	self.$$asyncQueue.push({scope: self, expression: expr});
 };
 
+/**
+ * @function $beginPhase
+ *
+ * string attribute in the scope that stores information about what’s currently going on.
+ * helps asynchronous functions identify whether a $digest is already ongoing.
+ * will throw a message is the string is not null.
+ *
+ * @param {string} set parameter phase to the attribute $$phase in Scope.
+ *  
+*/
 Scope.prototype.$beginPhase = function(phase) {
 	if(this.$$phase) {
 		throw this.$$phase + ' already in progress.';
@@ -195,9 +288,25 @@ Scope.prototype.$beginPhase = function(phase) {
 	this.$$phase = phase;
 };
 
+/**
+ * @function $clearPhase
+ *
+ * resets $$phase attribute on scope back to null.
+ *
+ *
+*/
+
 Scope.prototype.$clearPhase = function() {
 	this.$$phase = null;
 };
+
+/**
+ * @function $$flushApplyAsync
+ *
+ * TODO
+ *
+ *
+*/
 
 Scope.prototype.$$flushApplyAsync = function() {
 	while(this.$$applyAsyncQueue.length) {
@@ -212,9 +321,17 @@ Scope.prototype.$$flushApplyAsync = function() {
 
 // does not evaluate the given function immediately 
 // nor does it launch a digest immediately. 
-// it schedules both of these things to happen after a short period of time. 
+// it schedules both of these things to happen after a short period of time.
+
+/**
+ * @function $applyAsync
+ *
+ * TODO
+ *
+ *
+*/
+
 Scope.prototype.$applyAsync = function(expr) {
-	// NOTE: try and refactor like gordon did
 	var self = this;
 	self.$$applyAsyncQueue.push(function() {
 		self.$eval(expr);
@@ -231,6 +348,14 @@ Scope.prototype.$applyAsync = function(expr) {
 	}
 };
 
+/**
+ * @function $$postDigest
+ *
+ * TODO
+ *
+ *
+*/
+
 Scope.prototype.$$postDigest = function(fn) {
 	this.$$postDigestQueue.push(fn);
 };
@@ -239,6 +364,15 @@ Scope.prototype.$$postDigest = function(fn) {
 // function. The idea is that when any of the watch functions given in the array detects a change,
 // the listener function is invoked. The listener function is given the new and old values of the watches
 // wrapped in arrays, in the order of the original watch functions.
+
+/**
+ * @function $watchGroup
+ *
+ * TODO
+ *
+ *
+*/
+
 Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 	var self = this;
 	var newValues = new Array(watchFns.length);
@@ -268,7 +402,6 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 		changeReactionScheduled = false;
 	}
 
-// TODO: NOTES
 	var destroyFunctions = _.map(watchFns, function(watchFn, i) {
 		return self.$watch(watchFn, function(newValue, oldValue) {
 			newValues[i] = newValue;
@@ -287,6 +420,13 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 	};
 };
 
+/**
+ * @function $new
+ *
+ * TODO
+ *
+ *
+*/
 
 Scope.prototype.$new = function(isolated, parent) {
 	var child;
@@ -312,6 +452,15 @@ Scope.prototype.$new = function(isolated, parent) {
 // everyScope accepts a fn as a parameter.
 // passes/calls the function w/in the if statement (returns true or false based on if scope is dirty or clean).
 // 
+
+/**
+ * @function $$everyScope
+ *
+ * TODO
+ *
+ *
+*/
+
 Scope.prototype.$$everyScope = function(fn) {
 	if(fn(this)) {
 		// .every returns true or false based on the callback evaluation.
@@ -327,7 +476,16 @@ Scope.prototype.$$everyScope = function(fn) {
 // checks if scope has a parent to determine it's not the root scope.
 // then finds the current scope from its parent's $$children array and gets the position of the scope
 // checks if return value from indexOf is >= 0 to determine if we need to splice the array. (indexOf returns -1 )
-// set current scope's watchers to null 
+// set current scope's watchers to null
+
+/**
+ * @function $destroy
+ *
+ * TODO
+ *
+ *
+*/
+
 Scope.prototype.$destroy = function () {
 	if (this.$parent) {
 		var siblings = this.$parent.$$children;
@@ -338,6 +496,14 @@ Scope.prototype.$destroy = function () {
 	}
 	this.$$watchers = null;
 };
+
+/**
+ * @function $watchCollection
+ *
+ * TODO
+ *
+ *
+*/
 
 Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	var self = this;
