@@ -1638,6 +1638,21 @@ describe('Scope', function() {
 			expect(oldValueGiven).toEqual({ a: 1, b: 2 });
 		});
 	});
+	
+	// Chapter 5.
+	describe('Events', function () {
+		var parent;
+		var scope;
+		var child;
+		var isolatedChild;
+
+		beforeEach(function () {
+			parent = new Scope();
+			scope = parent.$new();
+			child = scope.$new();
+			isolatedChild = scope.$new(true);
+		});
+	});
 });
 
 

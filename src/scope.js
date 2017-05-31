@@ -4,12 +4,17 @@ var _ = require('lodash');
 
 function initWatchVal () {}
 
-/**
+/** 
  * @function isArrayLike
  *
- * TODO
+ * checks if an 'array-like' object is present and treats it like an array. 
+ * (array like ie. the DOM's NodeList)
+ * returns false if the value passed as argument is null or undefined 
+ * returns false if object has a property set as 'length' (not array-like) - in this case, will check if length is a number or length - 1 is also w/in obj property list.
+ * returns true if length of obj === 0 || (length is a number AND (length - 1) is a property key in obj).
  *
- *
+ * @param {*} - will be determined if the arg is an object or array-like object by checking if the arg has a length.
+ * @return {Boolean} will return true or false based on the criteria evaluated.
 */
 
 function isArrayLike(obj) {
@@ -423,9 +428,19 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 /**
  * @function $new
  *
- * TODO
+ * Creates a child scope for the current scope and returns it.
+ * Uses JavaScript's Object inheritance - when you create a child scope, its parent will be made its prototype.
+ * Create a constructor function for the child (ChildScope), set the Current Scope as the prototype of ChildScope. (left of the dot rule)
+ * Then, create a new object using ChildScope constructor and return it.
  *
- *
+ * @example
+ * var parent = new Scope();
+ * var child = parent.$new();
+ * Object.getPrototypeOf(child) === parent // true
+ * 
+ * @param {boolean} if set to true, we isolate the current scope and create a new object using the root Scope constructor.
+ * @param {Object} specifies the Object to set as the prototype. Will default to the 'left of the dot rule', if undefined.
+ * @returns {Object} returns a new object created from the constructor function.
 */
 
 Scope.prototype.$new = function(isolated, parent) {
@@ -453,12 +468,23 @@ Scope.prototype.$new = function(isolated, parent) {
 // passes/calls the function w/in the if statement (returns true or false based on if scope is dirty or clean).
 // 
 
+
 /**
- * @function $$everyScope
- *
- * TODO
- *
- *
+ * @function $everyScope
+ * 
+ * $everyScope recursively runs watches throughout the scope hierarchy. (for every scope in a parents 'children' array, will look to see if there are watchers set.)
+ * executes an arbitrary function once for each scope in the hierarchy until the function returns a falsy value. 
+ * 
+ * 
+ * var parent = new Scope();
+ * var child = parent.$new();
+ * parent.aValue = 'abc'; 
+ * child.$watch(function (scope) { return scope.aValue}, function (newValue, oldValue, scope) { scope.aValueWas = newValue; });
+ * parent.$digest();
+ * expect child.aValueWas === 'abc'; // true;
+ * 
+ * @param {function} fn executes once for each scope in the hiearchy until the function returns a falsy value.
+ * @returns {boolean} returns true or false if scope is dirty (true to continue loop) or false if clean
 */
 
 Scope.prototype.$$everyScope = function(fn) {
