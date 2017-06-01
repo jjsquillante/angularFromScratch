@@ -51,6 +51,7 @@ function Scope() {
 	this.$$postDigestQueue = [];
 	this.$root = this; // makes $root available to every scope in the hierarchy (prototypal inheritance chain)
 	this.$$children = [];
+	this.$$listeners = {};
 	this.$$phase = null;
 }
 
@@ -445,7 +446,7 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
 
 Scope.prototype.$new = function(isolated, parent) {
 	var child;
-	parent = parent || this; // defaults to this unless specific parent is passed in arg.
+	parent = parent || this; // defaults to `this` unless specific parent is passed in arg.
 	if(isolated) {
 		child = new Scope();
 		child.$root = parent.$root;
@@ -459,6 +460,7 @@ Scope.prototype.$new = function(isolated, parent) {
 	}
 	parent.$$children.push(child);
 	child.$$watchers = [];
+	child.$$listeners = {};
 	child.$$children = [];
 	child.$parent = parent;	
 	return child;
@@ -630,5 +632,35 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 
 	return this.$watch(internalWatchFn, internalListenerFn);
 };
+
+/* @function $on
+ *
+ * Should store the listener somewhere so that it can find it later when events are fired. 
+ * For storage we’ll put an object in the attribute $$listeners. 
+ * The object’s keys will be event names, and the values will be arrays 
+ * holding the listener functions registered for a particular event. 
+ * 
+ * The function takes two arguments: 
+ *  1. The name of the event of interest
+ *  2. The listener (subscriber) function that will get called when that event occurs.
+ * 
+ * Listeners registered through $on will receive both emitted and broadcasted events.
+ * 
+ * @param {string} // publisher
+ * @param {function} // subscriber
+ * @return {*} 
+**/
+
+Scope.prototype.$on = function (eventName, listener) {
+	var listeners = this.$$listeners[eventName];
+
+	if (!listeners) {
+		this.$$listeners[eventName] = listeners = [];
+	}
+	listeners.push(listener);
+};
+
+
+
 
 module.exports = Scope;
