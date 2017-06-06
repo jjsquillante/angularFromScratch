@@ -1682,31 +1682,23 @@ describe('Scope', function() {
 			expect(isolatedChild.$$listeners).toEqual({someEvent: [listener3]});			
 		});
 
-		it('calls the listeners of the matching event on $emit.', function () {
-			var listener1 = jasmine.createSpy();
-			var listener2 = jasmine.createSpy();
+		_.forEach(['$emit', '$broadcast'], function (method) {
 
-			scope.$on('someEvent', listener1);
-			scope.$on('someOtherEvent', listener2);
+			it('calls the listeners of the matching event on ' + method, function () {
+				var listener1 = jasmine.createSpy();
+				var listener2 = jasmine.createSpy();
 
-			scope.$emit('someEvent');
+				scope.$on('someEvent', listener1);
+				scope.$on('someOtherEvent', listener2);
 
-			expect(listener1).toHaveBeenCalled();
-			expect(listener2).not.toHaveBeenCalled();
+				scope[method]('someEvent');
+
+				expect(listener1).toHaveBeenCalled();
+				expect(listener2).not.toHaveBeenCalled();
+			});
+
 		});
-
-		it('calls the listeners of the matching event on $broadcast.', function () {
-			var listener1 = jasmine.createSpy();
-			var listener2 = jasmine.createSpy();
-
-			scope.$on('someEvent', listener1);
-			scope.$on('someOtherEvent', listener2);
-
-			scope.$broadcast('someEvent');
-
-			expect(listener1).toHaveBeenCalled();
-			expect(listener2).not.toHaveBeenCalled();
-		});
+		
 	});
 });
 
