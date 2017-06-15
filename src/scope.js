@@ -477,7 +477,7 @@ Scope.prototype.$new = function(isolated, parent) {
  * $everyScope recursively runs watches throughout the scope hierarchy. (for every scope in a parents 'children' array, will look to see if there are watchers set.)
  * executes an arbitrary function once for each scope in the hierarchy until the function returns a falsy value. 
  * 
- * 
+ * @example
  * var parent = new Scope();
  * var child = parent.$new();
  * parent.aValue = 'abc'; 
@@ -633,7 +633,7 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
 	return this.$watch(internalWatchFn, internalListenerFn);
 };
 
-/* @function $on
+/** @function $on
  *
  * Should store the listener somewhere so that it can find it later when events are fired. 
  * For storage we’ll put an object in the attribute $$listeners. 
@@ -649,7 +649,7 @@ Scope.prototype.$watchCollection = function (watchFn, listenerFn) {
  * @param {string} // publisher
  * @param {function} // subscriber
  * @return {*} 
-**/
+*/
 
 Scope.prototype.$on = function (eventName, listener) {
 	var listeners = this.$$listeners[eventName];
@@ -660,19 +660,33 @@ Scope.prototype.$on = function (eventName, listener) {
 	listeners.push(listener);
 };
 
+/** @function $emit
+ *
+ * Basic functionality is that when you call $emit with an event name as an argument,
+ * it will call ALL the listeners that have been registered for that event name.
+ *
+ * @param {'string'}
+ *
+*/
+
 Scope.prototype.$emit = function (eventName) {
 	this.$$fireEventOnScope(eventName);
 };
+
+/** @function $broadcast
+
+*/
 
 Scope.prototype.$broadcast = function (eventName) {
 	this.$$fireEventOnScope(eventName);
 };
 
 Scope.prototype.$$fireEventOnScope = function (eventName) {
+	var event = {name: eventName};
 	var listeners = this.$$listeners[eventName] || [];
 
 	_.forEach(listeners, function (listener) {
-		listener();
+		listener(event);
 	});
 };
 

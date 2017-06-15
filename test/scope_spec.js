@@ -1697,6 +1697,40 @@ describe('Scope', function() {
 				expect(listener2).not.toHaveBeenCalled();
 			});
 
+			it('passes an event object with a name to listeners on ' + method, function () {
+				var listener = jasmine.createSpy();
+				scope.$on('someEvent', listener);
+
+				scope[method]('someEvent');
+
+				expect(listener).toHaveBeenCalled();
+				expect(listener.calls.mostRecent().args[0].name).toEqual('someEvent');
+				
+				/**
+				 * The calls.mostRecent() function of a Jasmine spy contains information 
+				 * about the last time that spy was called. It has an args attribute containing
+				 * an array of the arguments that were passed to the function.
+				*/
+			});
+
+			    /**
+			     * An important aspect of event objects is that the same exact event object is passed to each listener.
+			    */
+			it('passes the same event object to each listener on ' + method, function () {
+				var listener1 = jasmine.createSpy();
+				var listener2 = jasmine.createSpy();
+
+				scope.$on('someEvent', listener1);
+				scope.$on('someEvent', listener2);
+
+				scope[method]('someEvent');
+
+				var event1 = listener1.calls.mostRecent().args[0];
+				var event2 = listener2.calls.mostRecent().args[0];
+
+				expect(event1).toBe(event2);
+			});
+
 		});
 		
 	});
