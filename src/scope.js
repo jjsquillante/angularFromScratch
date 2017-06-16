@@ -657,7 +657,16 @@ Scope.prototype.$on = function (eventName, listener) {
 	if (!listeners) {
 		this.$$listeners[eventName] = listeners = [];
 	}
+	
 	listeners.push(listener);
+	
+	return function () {
+		var index = listeners.indexOf(listener);
+		
+		if (index >= 0) {
+			listeners[index] = null;
+		}
+	};
 };
 
 /** @function $emit
@@ -687,10 +696,27 @@ Scope.prototype.$$fireEventOnScope = function (eventName, additionalArgs) {
 	var event = {name: eventName};
 	var listenerArgs = [event].concat(additionalArgs);
 	var listeners = this.$$listeners[eventName] || [];
+	
+	// forEach or forEachRight works - but may have edge cases
+	// _.forEach(listeners, function (listener, iterator, listeners) {
+		
+	// 	if (listener === null) {
+	// 		listeners.splice(iterator, 1);
+	// 	} else {
+	// 		listener.apply(null, listenerArgs);
+	// 	}
+	// });
 
-	_.forEach(listeners, function (listener) {
-		listener.apply(null, listenerArgs);
-	});
+	// tero uses a while loop
+	var i = 0;
+	while (i < listeners.length) {
+		if (listeners[i] === null) {
+			listeners.splice(i, 1);
+		} else {
+			listeners[i].apply(null, listenerArgs)
+			i++;
+		}
+	}
 
 	return event;
 };
