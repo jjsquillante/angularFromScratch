@@ -673,14 +673,27 @@ Scope.prototype.$on = function (eventName, listener) {
  *
  * Basic functionality is that when you call $emit with an event name as an argument,
  * it will call ALL the listeners that have been registered for that event name.
- *
+ * The event initially gets passed to its listeners on the current scope, and then up the 
+ * scope hierarchy, to its listeners on each scope up to and including the root. 
+ * 
+ * sets scope = this in order to travel up the scope hierarchy.
+ * do while loop to fireEvent and set scope one higher (to it's parent - scope.$parent)
+ * while scope.$parent is defined (set in scope.$new()).
  * @param {'string'}
  *
 */
 
 Scope.prototype.$emit = function (eventName) {
-	var additionalArgs = _.tail(arguments);
-	return this.$$fireEventOnScope(eventName, additionalArgs);
+	var event = {name: eventName};
+	var listenerArgs = [event].concat(_.tail(arguments));
+	var scope = this;
+
+	do {
+		scope.$$fireEventOnScope(eventName, listenerArgs);
+		scope = scope.$parent;
+	} while (scope);
+
+	return event;
 };
 
 /** @function $broadcast
@@ -688,15 +701,18 @@ Scope.prototype.$emit = function (eventName) {
 */
 
 Scope.prototype.$broadcast = function (eventName) {
-	var additionalArgs = _.tail(arguments);
-	return this.$$fireEventOnScope(eventName, additionalArgs);
+	var event = {name: eventName};
+	var listenerArgs = [event].concat(_.tail(arguments));
+
+	this.$$fireEventOnScope(eventName, listenerArgs);
+
+	return event;
 };
 
-Scope.prototype.$$fireEventOnScope = function (eventName, additionalArgs) {
-	var event = {name: eventName};
-	var listenerArgs = [event].concat(additionalArgs);
-	var listeners = this.$$listeners[eventName] || [];
+Scope.prototype.$$fireEventOnScope = function (eventName, listenerArgs) {
 	
+	var listeners = this.$$listeners[eventName] || [];
+
 	// forEach or forEachRight works - but may have edge cases
 	// _.forEach(listeners, function (listener, iterator, listeners) {
 		
@@ -713,7 +729,7 @@ Scope.prototype.$$fireEventOnScope = function (eventName, additionalArgs) {
 		if (listeners[i] === null) {
 			listeners.splice(i, 1);
 		} else {
-			listeners[i].apply(null, listenerArgs)
+			listeners[i].apply(null, listenerArgs);
 			i++;
 		}
 	}
