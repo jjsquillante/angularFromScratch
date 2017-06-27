@@ -1812,9 +1812,10 @@ describe('Scope', function() {
 			var scopeListener = jasmine.createSpy();
 			var childListener = jasmine.createSpy();
 			var isolatedChildListener = jasmine.createSpy();
-
+			scope.aValue = 'abc';
 			scope.$on('someEvent', scopeListener);
 			child.$on('someEvent', childListener);
+			child.aValue = 'def';
 			isolatedChild.$on('someEvent', isolatedChildListener);
 
 			scope.$broadcast('someEvent');
@@ -1838,6 +1839,30 @@ describe('Scope', function() {
 			expect(scopeEvent).toBe(childEvent);
 		});		
 		
+		it('attaches targetScope on $emit.', function () {
+			var scopeListener = jasmine.createSpy();
+			var parentListener = jasmine.createSpy();
+
+			scope.$on('someEvent', scopeListener);
+			scope.$on('someEvent', parentListener);
+
+			scope.$emit('someEvent');
+
+			expect(scopeListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+			expect(parentListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+		});
+		it('attaches targetScope on $broadcast.', function () {
+			var scopeListener = jasmine.createSpy();
+			var childListener = jasmine.createSpy();
+
+			scope.$on('someEvent', scopeListener);
+			scope.$on('someEvent', childListener);
+
+			scope.$broadcast('someEvent');
+
+			expect(scopeListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+			expect(childListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+		});		
 	});
 });
 
