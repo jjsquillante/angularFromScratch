@@ -684,7 +684,14 @@ Scope.prototype.$on = function (eventName, listener) {
 */
 
 Scope.prototype.$emit = function (eventName) {
-	var event = {name: eventName, targetScope: this};
+	var propagationStopped = false;
+	var event = {
+		name: eventName, 
+		targetScope: this,
+		stopPropagation: function () {
+			propagationStopped = true;
+		}
+	};
 	var listenerArgs = [event].concat(_.tail(arguments));
 	var scope = this;
 
@@ -692,7 +699,7 @@ Scope.prototype.$emit = function (eventName) {
 		event.currentScope = scope;
 		scope.$$fireEventOnScope(eventName, listenerArgs);
 		scope = scope.$parent;
-	} while (scope);
+	} while (scope && !propagationStopped);
 	event.currentScope = null;
 	return event;
 };
