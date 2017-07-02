@@ -1956,7 +1956,21 @@ describe('Scope', function() {
 			scope.$emit('someEvent');
 
 			expect(listener2).toHaveBeenCalled();
-		});		
+		});	
+
+		_.forEach(['$emit', '$broadcast'], function (method) {
+			it('sets defaultPrevented on event when preventDefault is called on ' + method, function () {
+				var listener = function (event) {
+					event.preventDefault();
+				};
+
+				scope.$on('someEvent', listener);
+
+				var event = scope[method]('someEvent');
+
+				expect(event.defaultPrevented).toBe(true); 
+			});
+		});	
 
 	});
 });
