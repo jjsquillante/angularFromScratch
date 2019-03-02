@@ -15,19 +15,19 @@
   "devDependencies": {
     "browserify": "^14.0.0",
     "jasmine-core": "^2.5.2",
-    "jshint": "^2.9.4",
+    "jshint": "^2.10.1",
     "karma": "^1.4.1",
     "karma-browserify": "^5.1.1",
     "karma-jasmine": "^1.1.0",
     "karma-jshint-preprocessor": "0.0.6",
-    "karma-phantomjs-launcher": "^1.0.2",
-    "phantomjs-prebuilt": "^2.1.14",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "phantomjs-prebuilt": "^2.1.16",
     "sinon": "^1.17.7",
-    "watchify": "^3.9.0"
+    "watchify": "^3.11.1"
   },
   "dependencies": {
     "gulp-jasmine-browser": "^1.7.1",
     "jquery": "^3.1.1",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.11"
   }
 }
