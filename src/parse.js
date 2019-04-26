@@ -13,7 +13,7 @@ Lexer.prototype.lex = function (text) {
 
 	while (this.index < this.text.length) {
 		this.ch = this.text.charAt(this.index);
-		if (this.isNumber(this.ch)) {
+		if (this.isNumber(this.ch) || this.ch === '.' && this.isNumber(this.peek())) {
 			this.readNumber();
 		} else {
 			throw 'Unexpected next character: ' + this.ch;
@@ -40,6 +40,11 @@ Lexer.prototype.readNumber = function () {
 		value: Number(number)
 	});
 };
+Lexer.prototype.peek = function () {
+	return this.index < this.text.length - 1 ?
+		this.text.charAt(this.index + 1) :
+		false;
+}
 
 function AST(lexer) {
 	this.lexer = lexer;
@@ -78,7 +83,7 @@ ASTCompiler.prototype.recurse = function (ast) {
 			this.state.body.push('return ', this.recurse(ast.body), ';');
 			break;
 		case AST.Literal:
-			return ast.value
+			return ast.value;
 	}
 };
 

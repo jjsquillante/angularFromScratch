@@ -13,4 +13,8 @@ describe('parse', function () {
 			console.log(fn.toString());
 			expect(fn()).toBe(4.2);
 		});
+		it('can parse a floating point number without an integer part.', function () {
+			var fn = parse('.42');
+			expect(fn()).toBe(0.42);
+		});
 });
