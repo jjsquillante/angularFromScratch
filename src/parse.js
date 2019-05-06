@@ -29,6 +29,8 @@ Lexer.prototype.lex = function (text) {
 			this.readString(this.ch);
 		} else if (this.isIdent(this.ch)) {
 			this.readIdent();
+		} else if (this.isWhiteSpace(this.ch)) {
+			this.index++;
 		} else {
 			throw 'Unexpected next character: ' + this.ch;
 		}
@@ -136,6 +138,11 @@ Lexer.prototype.readIdent = function () {
 	}
 	var token = { text: text };
 	this.tokens.push(token);
+};
+
+Lexer.prototype.isWhiteSpace = function(ch) {
+	return ch === ' ' || ch === '\r' || ch === '\t' ||
+		ch === '\n' || ch === '\v' || ch === '\u00A0';
 };
 
 function AST(lexer) {
