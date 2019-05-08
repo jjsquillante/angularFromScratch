@@ -86,17 +86,17 @@ describe('parse', function () {
 			}).toThrow();
 		});
 
-		it('will parse null', function () {
+		it('will parse null.', function () {
 			var fn = parse('null');
 			expect(fn()).toBe(null);
 		});
 
-		it('will parse true', function () {
+		it('will parse true.', function () {
 			var fn = parse('true');
 			expect(fn()).toBe(true);
 		});
 
-		it('will parse false', function () {
+		it('will parse false.', function () {
 			var fn = parse('false');
 			expect(fn()).toBe(false);
 		});
@@ -104,5 +104,20 @@ describe('parse', function () {
 		it('ignores whitespace.', function () {
 			var fn = parse('\n42 ');
 			expect(fn()).toEqual(42);
+		});
+
+		it('will parse an empty array.', function () {
+			var fn = parse('[]');
+			expect(fn()).toEqual([]);
+		});
+
+		it('will parse a non-empty array.', function() {
+			var fn = parse('[1, "two", [3], true]');
+			expect(fn()).toEqual([1, 'two', [3], true]);
+		});
+
+		it('will parse an array with trailing commas.', function () {
+			var fn = parse('[1, 2, 3, ]');
+			expect(fn()).toEqual([1,2,3]);
 		});
 });
