@@ -271,10 +271,14 @@ function ASTCompiler (astBuilder) {
 // AST compilation will be done here.
 ASTCompiler.prototype.compile = function (text) {
 	var ast = this.astBuilder.ast(text);
-	this.state = { body: [] };
+	this.state = { body: [], nextId: 0,  vars: [] };
 	this.recurse(ast);
 	 /* jshint -W054 */
-	 return new Function('s', this.state.body.join(''));
+	 return new Function('s', 
+	 	(this.state.vars.length ?
+	 		'var ' + this.state.vars.join(',') + ';' :
+	 		''
+	 	) + this.state.body.join(''));
 	 /* jshint +W054 */
 };
 
@@ -300,7 +304,9 @@ ASTCompiler.prototype.recurse = function (ast) {
 			}, this));
 			return '{' + properties.join(',') + '}';
 		case AST.Identifier:
-			return this.nonComputedMember('s', ast.name);
+			var intoId = this.nextId();
+			this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
+			return intoId;
 	}
 };
 
@@ -322,6 +328,20 @@ ASTCompiler.prototype.stringEscapeFn = function (c) {
 
 ASTCompiler.prototype.nonComputedMember = function (left, right) {
 	return '(' + left + ').' + right;
+};
+
+ASTCompiler.prototype.if_ = function (test, consequent) {
+	this.state.body.push('if(', test, '){', consequent, '}');
+};
+
+ASTCompiler.prototype.assign = function (id, value) {
+	return id + '=' + value + ';';
+};
+
+ASTCompiler.prototype.nextId = function () {
+	var id = 'v' + (this.state.nextId++);
+	this.state.vars.push(id);
+	return id;
 };
 
 function Parser(lexer) {
