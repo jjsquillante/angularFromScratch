@@ -291,4 +291,26 @@ describe('parse', function () {
 			var fn = parse('anObject.aFunction()');
 			expect(fn(scope)).toBe(42);
 		});
+
+		it('binds bare functions to the scope.', function () {
+			var scope = {
+				aFunction: function () {
+					return this;
+				}
+			};
+			var fn = parse('aFunction()');
+			expect(fn(scope)).toBe(scope);
+		});
+
+
+		it('binds bare functions on locals to the locals.', function () {
+			var scope = {};
+			var locals = {
+				aFunction: function () {
+					return this;
+				}
+			};
+			var fn = parse('aFunction()');
+			expect(fn(scope, locals)).toBe(locals);
+		});
 });

@@ -355,6 +355,11 @@ ASTCompiler.prototype.recurse = function (ast, context) {
 				this.assign(intoId, this.nonComputedMember('l', ast.name)));
 			this.if_(this.not(this.getHasOwnProperty('l', ast.name)) + ' && s',
 				this.assign(intoId, this.nonComputedMember('s', ast.name)));
+			if (context) {
+				context.context = this.getHasOwnProperty('l', ast.name) + '?l:s';
+				context.name = ast.name;
+				context.computed = false;
+			}
 			return intoId;
 		case AST.ThisExpression:
 			return 's';
