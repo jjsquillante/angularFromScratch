@@ -10,6 +10,14 @@ var ESCAPES = {
 	'"': '"'
 };
 
+function ensureSafeMemberName(name) {
+	if (name === 'constructor' || name === '__proto__' ||
+			name === '__defineGetter' || name === '__defineSetter' ||
+			name === '__lookupGetter__' || name === '__lookupSetter__') {
+		throw 'Attempting to access a disallowed field in Angular expressions!';
+	}
+}
+
 // chapter 6.
 
 function Lexer() {}
@@ -364,6 +372,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
 			}, this));
 			return '{' + properties.join(',') + '}';
 		case AST.Identifier:
+		ensureSafeMemberName(ast.name);
 			intoId = this.nextId();
 			this.if_(this.getHasOwnProperty('l', ast.name),
 				this.assign(intoId, this.nonComputedMember('l', ast.name)));
@@ -402,6 +411,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
 					context.computed = true;
 				}
 			} else {
+				ensureSafeMemberName(ast.property.name);
 				if (create) {
 					this.if_(this.not(this.nonComputedMember(left, ast.property.name)),
 							this.assign(this.nonComputedMember(left, ast.property.name), '{}'));
