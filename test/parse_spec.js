@@ -376,16 +376,19 @@ describe('parse', function () {
 			expect(function () {
 				var fn = parse('obj.__defineSetter__("evil", fn)');
 				fn({ obj: {}, fn: function() {}});
-			});
-		}).toThrow();
+			}).toThrow();
+		});
 
 		it('does not allow calling __lookupGetter__', function () {
-				var fn = parse('obj.__lookupGetter__("evil")');
-				fn({ obj: {} });
-		}).toThrow();
+			 expect(function () {
+					var fn = parse('obj.__lookupGetter__("evil")');
+					fn({ obj: {} });
+			 }).toThrow();
+		});
 		it('does not allow calling __lookupSetter__', function () {
+			expect(function () {
 				var fn = parse('obj.__lookupSetter__("evil")');
 				fn({ obj: {} });
-		}).toThrow();
-
+			}).toThrow();
+		});
 });

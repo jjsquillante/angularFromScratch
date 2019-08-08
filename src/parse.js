@@ -12,7 +12,7 @@ var ESCAPES = {
 
 function ensureSafeMemberName(name) {
 	if (name === 'constructor' || name === '__proto__' ||
-			name === '__defineGetter' || name === '__defineSetter' ||
+			name === '__defineGetter__' || name === '__defineSetter__' ||
 			name === '__lookupGetter__' || name === '__lookupSetter__') {
 		throw 'Attempting to access a disallowed field in Angular expressions!';
 	}
@@ -341,11 +341,9 @@ ASTCompiler.prototype.compile = function (text) {
 	this.state = { body: [], nextId: 0,  vars: [] };
 	this.recurse(ast);
 	 /* jshint -W054 */
-	 return new Function('s', 'l',
-	 	(this.state.vars.length ?
-	 		'var ' + this.state.vars.join(',') + ';' :
-	 		''
-	 	) + this.state.body.join(''));
+	 var fnString = 'var fn = function(s,l){' +
+	 (this.state.vars.length ? 'var ' + this.state.vars.join(',') + ';' : '' ) + this.state.body.join('') + '};return fn;';
+	 return new Function('ensureSafeMemberName', fnString)(ensureSafeMemberName);
 	 /* jshint +W054 */
 };
 
@@ -400,6 +398,7 @@ ASTCompiler.prototype.recurse = function (ast, context, create) {
 			}
 			if (ast.computed) {
 				var right = this.recurse(ast.property);
+				this.addEnsureSafeMemberName(right);
 				if (create) {
 					this.if_(this.not(this.computedMember(left, right)),
 						this.assign(this.computedMember(left, right), '{}'));
@@ -497,6 +496,10 @@ ASTCompiler.prototype.getHasOwnProperty = function (object, property) {
 
 ASTCompiler.prototype.computedMember = function (left, right) {
 	return '(' + left + ')[' + right + ']';
+};
+
+ASTCompiler.prototype.addEnsureSafeMemberName = function (expr) {
+	this.state.body.push('ensureSafeMemberName(' + expr + ');');
 };
 
 function Parser(lexer) {
