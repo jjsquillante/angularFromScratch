@@ -22,6 +22,12 @@ function ensureSafeObject(obj) {
 	if (obj) {
 		if (obj.window === obj) {
 			throw 'Referencing window in Angular expressions is disallowed!';
+		} else if((obj.children && obj.nodeName || (obj.prop && obj.attr && obj.find))) {
+			throw 'Referencing DOM nodes in Angular expressions is disallowed!';
+		} else if (obj.constructor === obj) {
+			throw 'Referencing Function in Angular expressions is disallowed!';
+		} else if (obj === Object) {
+			throw 'Referencing Object is Angular expressions is disallowed!';
 		}
 	}
 	return obj;

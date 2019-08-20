@@ -441,4 +441,27 @@ describe('parse', function () {
 				fn({ wnd: window });
 			}).toThrow();
 		});
+
+		it('does not allow calling functions on DOM elements.', function () {
+			var fn = parse('el.setAttribute("evil", "true")');
+			expect(function () {
+				fn({
+					el: document.documentElement
+				});
+			}).toThrow();
+		});
+
+		it('does not allow calling the aliased function constructor.', function () {
+			var fn = parse('fnConstructor("return window;")');
+			expect(function () {
+				fn({ fnConstructor: (function () {}).constructor });
+			}).toThrow();
+		});
+
+		it('does not allow calling functions on Object.', function () {
+			var fn = parse('obj.create({})');
+			expect(function () {
+				fn({ obj: Object });
+			}).toThrow();
+		})
 });
