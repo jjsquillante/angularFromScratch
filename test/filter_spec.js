@@ -15,7 +15,7 @@ describe('filter', function () {
 	it('allows registering multiple filters with an object', function() {
 		var myFilter = function() { };
 		var myOtherFilter = function() { };
-		register({
+		var re = register({
 			my: function() {
 				return myFilter;
 			},
