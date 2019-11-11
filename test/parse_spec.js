@@ -676,4 +676,19 @@ describe('parse', function () {
 			var fn = parse('aString | upcase');
 			expect(fn({ aString: 'Hello' })).toEqual('HELLO');
 		});
+
+		it('can parse filter chain expressions', function() {
+			register('upcase', function() {
+				return function(s) {
+					return s.toUpperCase();
+				};
+			});
+			register('exclamate', function() {
+				return function(s) {
+					return s + '!';
+				};
+			});
+			var fn = parse('"hello" | upcase | exclamate');
+			expect(fn()).toEqual('HELLO!');
+});
 });
