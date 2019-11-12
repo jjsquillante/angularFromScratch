@@ -547,12 +547,16 @@ AST.prototype.ternary = function () {
 AST.prototype.filter = function() {
 	var left = this.assignment();
 	while (this.expect('|')) {
+		var args = [left];
  		left = {
  			type: AST.CallExpression,
  			callee: this.identifier(),
- 			arguments: [left],
+ 			arguments: args,
  			filter: true
- 		}; 
+ 		};
+ 		while (this.expect(':')) {
+ 			args.push(this.assignment());
+ 		}
 	}
 	return left;
 };
